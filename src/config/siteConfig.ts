@@ -64,7 +64,7 @@ export const siteConfig: SiteConfig = {
   // ----------------------------------------------------
 
   themeColor: {
-    hue: 250,
+    hue: 215,
     defaultMode: "system",
   },
 

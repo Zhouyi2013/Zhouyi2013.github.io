@@ -10,6 +10,7 @@
 @import './categories.css';
 @import './layout-base.css';
 @import './enhanced-animations.css';
+@import './tech-theme.css';
 
 @plugin '@tailwindcss/typography';
 

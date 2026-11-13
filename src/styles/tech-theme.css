@@ -1,0 +1,355 @@
+/* ===== 科技风主题增强（全站） =====
+   在 variables.styl 的主题变量之上叠加：青蓝强调色、网格背景、霓虹光效。
+   本文件在 main.css 末尾加载，规则不放入 @layer，可覆盖先前同特异性样式。 */
+
+/* --- 科技强调色变量 --- */
+:root {
+  --tech-cyan: oklch(0.85 0.11 200);
+  --tech-blue: oklch(0.68 0.17 255);
+  --tech-gradient: linear-gradient(135deg, var(--tech-cyan), var(--tech-blue));
+  --tech-line: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--tech-cyan) 30%,
+    var(--tech-blue) 70%,
+    transparent 100%
+  );
+  --tech-glow-soft: 0 0 18px oklch(0.7 0.13 225 / 0.25);
+}
+
+/* --- 科技网格背景 + 顶部辉光（固定层，位于内容之下） --- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, oklch(0.55 0.06 230 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.55 0.06 230 / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(120% 70% at 50% 0%, #000 35%, transparent 78%);
+  mask-image: radial-gradient(120% 70% at 50% 0%, #000 35%, transparent 78%);
+}
+
+:root.dark body::before {
+  background-image:
+    linear-gradient(to right, oklch(0.8 0.06 225 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.8 0.06 225 / 0.06) 1px, transparent 1px);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(56rem 34rem at 12% -8%, oklch(0.75 0.12 215 / 0.16), transparent 70%),
+    radial-gradient(64rem 36rem at 88% -4%, oklch(0.66 0.16 258 / 0.15), transparent 72%);
+}
+
+:root.dark body::after {
+  background:
+    radial-gradient(56rem 34rem at 12% -8%, oklch(0.75 0.12 215 / 0.13), transparent 70%),
+    radial-gradient(64rem 36rem at 88% -4%, oklch(0.66 0.16 258 / 0.12), transparent 72%);
+}
+
+/* --- 文本选中：科技蓝 --- */
+::selection {
+  background-color: color-mix(in oklch, var(--tech-blue) 42%, transparent);
+}
+
+:root.dark ::selection {
+  background-color: color-mix(in oklch, var(--tech-blue) 55%, transparent);
+  color: #fff;
+}
+
+/* --- 导航栏：底部渐变辉光线 --- */
+#navbar > div::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: inherit;
+  background: var(--tech-line);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* --- 文章卡片：hover 青光 + 顶部渐变线 --- */
+.post-card-wrapper {
+  transition:
+    transform 0.25s ease-out,
+    box-shadow 0.25s ease-out,
+    border-color 0.25s ease-out;
+}
+
+.post-card-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--tech-line);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.post-card-wrapper:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 30px oklch(0.45 0.1 230 / 0.16),
+    0 0 20px oklch(0.7 0.12 225 / 0.15);
+}
+
+.post-card-wrapper:hover::after {
+  opacity: 1;
+}
+
+.enable-card-border .post-card-wrapper {
+  border-color: color-mix(in oklch, var(--primary) 22%, var(--line-divider));
+}
+
+.enable-card-border .post-card-wrapper:hover {
+  border-color: color-mix(in oklch, var(--tech-cyan) 55%, transparent);
+}
+
+:root.dark .post-card-wrapper:hover {
+  box-shadow:
+    0 10px 30px oklch(0.12 0.05 230 / 0.55),
+    0 0 22px oklch(0.7 0.13 225 / 0.25);
+}
+
+/* --- 首页 / 文章横幅标题：科技渐变文字 + 流光 --- */
+html .banner-title,
+html .banner-post-title {
+  background-image: linear-gradient(
+    100deg,
+    var(--tech-cyan) 0%,
+    var(--tech-blue) 55%,
+    var(--tech-cyan) 110%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-shadow: none !important;
+  filter: drop-shadow(0 2px 12px oklch(0.55 0.15 230 / 0.5));
+  animation:
+    banner-fadeInUp 0.3s ease-out,
+    tech-title-shimmer 8s linear infinite;
+}
+
+@keyframes tech-title-shimmer {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: -200% 0%;
+  }
+}
+
+/* --- 代码块：科技强调描边 + 辉光 --- */
+.expressive-code {
+  border: 1px solid color-mix(in oklch, var(--primary) 20%, var(--line-divider));
+  box-shadow:
+    var(--tech-glow-soft),
+    0 6px 18px oklch(0.2 0.02 230 / 0.12);
+}
+
+:root.dark .expressive-code {
+  box-shadow:
+    0 0 24px oklch(0.7 0.13 225 / 0.18),
+    0 8px 22px oklch(0.1 0.02 230 / 0.4);
+}
+
+/* --- 通用卡片 / 按钮：开启卡片边框时使用科技强调色 --- */
+.enable-card-border .card-base,
+.enable-card-border .card-base-transparent,
+.enable-card-border .btn-card {
+  border-color: color-mix(in oklch, var(--primary) 20%, var(--line-divider));
+}
+
+/* --- 分页：hover 辉光 --- */
+.pagination-wrapper .btn-card:hover,
+.pagination-wrapper .btn-plain:hover {
+  box-shadow: var(--tech-glow-soft);
+}
+
+/* ==========================================================================
+   现代交互增强
+   原则：只动 transform / opacity / box-shadow 等合成器友好属性，
+   无额外网络请求，全部动画均受 prefers-reduced-motion 保护。
+   ========================================================================== */
+
+/* --- 卡片聚光：指针跟随光层（JS 写入 --spot-x/--spot-y，见 CursorFx.astro） --- */
+.post-card-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    340px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    oklch(0.72 0.12 225 / 0.1),
+    transparent 70%
+  );
+}
+
+:root.dark .post-card-wrapper::before {
+  background: radial-gradient(
+    340px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    oklch(0.82 0.11 220 / 0.14),
+    transparent 70%
+  );
+}
+
+.post-card-wrapper:hover::before {
+  opacity: 1;
+}
+
+/* --- 全局滚动条：细圆角、科技蓝渐变、跟随主题 --- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.58 0.1 230 / 0.35) transparent;
+}
+
+:root.dark html {
+  scrollbar-color: oklch(0.72 0.1 225 / 0.35) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    oklch(0.66 0.1 215 / 0.5),
+    oklch(0.58 0.14 255 / 0.5)
+  );
+  border-radius: 999px;
+}
+
+:root.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    oklch(0.78 0.1 215 / 0.4),
+    oklch(0.68 0.14 255 / 0.4)
+  );
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    oklch(0.62 0.12 215 / 0.7),
+    oklch(0.55 0.16 255 / 0.7)
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* --- 键盘焦点光环：科技青描边 + 柔和外发光 --- */
+:where(
+    a[href],
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [contenteditable="true"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline-color: var(--tech-cyan);
+  box-shadow: 0 0 0 4px oklch(0.7 0.13 225 / 0.18);
+}
+
+:root.dark
+  :where(
+      a[href],
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      [contenteditable="true"],
+      [tabindex]:not([tabindex="-1"])
+    ):focus-visible {
+  box-shadow: 0 0 0 4px oklch(0.75 0.12 220 / 0.28);
+}
+
+/* --- 主按钮：hover 辉光 + 按压反馈（保留原有颜色过渡） --- */
+.btn-regular {
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.25s ease,
+    transform 0.12s ease;
+}
+
+.btn-regular:hover {
+  box-shadow: 0 4px 16px oklch(0.6 0.14 230 / 0.28);
+}
+
+:root.dark .btn-regular:hover {
+  box-shadow: 0 4px 18px oklch(0.7 0.13 225 / 0.35);
+}
+
+.btn-regular:active {
+  transform: scale(0.97);
+}
+
+/* --- 侧边栏小组件：hover 微妙辉光（保留原有颜色过渡） --- */
+#left-sidebar .widget,
+#right-sidebar .widget {
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+#left-sidebar .widget:hover,
+#right-sidebar .widget:hover {
+  box-shadow: 0 8px 24px oklch(0.5 0.08 230 / 0.1);
+}
+
+:root.dark #left-sidebar .widget:hover,
+:root.dark #right-sidebar .widget:hover {
+  box-shadow: 0 8px 28px oklch(0.7 0.12 225 / 0.14);
+}
+
+/* --- 减弱动效：关闭流光、悬停位移、聚光与按压动画 --- */
+@media (prefers-reduced-motion: reduce) {
+  html .banner-title,
+  html .banner-post-title {
+    animation: none;
+  }
+
+  .post-card-wrapper:hover {
+    transform: none;
+  }
+
+  .post-card-wrapper::before {
+    display: none;
+  }
+
+  .btn-regular:active {
+    transform: none;
+  }
+}

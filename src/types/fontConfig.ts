@@ -33,6 +33,18 @@ export type FontDefinition = {
 	cssVariable: string;
 	/** 字体提供商（内置名称或自定义 provider 对象） */
 	provider: BuiltinFontProvider | CustomFontProvider;
+	/**
+	 * CDN 样式表 URL（单个或数组）。
+	 *
+	 * 设置后该字体**不经过 Astro Font API**：
+	 * - `astro.config.mjs` 会将其从 `fonts` 配置中排除；
+	 * - `FontSetup.astro` 改为直接输出 `<link rel="stylesheet">` 并定义对应的 CSS 变量。
+	 *
+	 * 适用于自带 CDN 子集化（unicode-range + font-display: swap）的字体包，
+	 * 如 `lxgw-wenkai-webfont`：浏览器只下载页面实际用到的字体分片，可显著提升加载速度。
+	 * 此类字体可将 provider 设为 `{ name: "cdn" }` 作为标记。
+	 */
+	cdnUrl?: string | string[];
 	/** 字重列表 */
 	weights?: Array<string | number>;
 	/** 字体样式 */

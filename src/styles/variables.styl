@@ -90,9 +90,9 @@
 /* 暗色主题变量 */
 :root.dark
   --primary: oklch(0.75 0.14 var(--hue))
-  --page-bg: oklch(0.16 0.014 var(--hue))
-  --card-bg: oklch(0.23 0.015 var(--hue))
-  --card-bg-transparent: unquote("rgb(23 23 23 / var(--card-transparent-opacity, 0.6))")
+  --page-bg: oklch(0.135 0.022 var(--hue))
+  --card-bg: oklch(0.19 0.02 var(--hue))
+  --card-bg-transparent: unquote("color-mix(in oklch, var(--card-bg) var(--card-transparent-opacity, 0.6), transparent)")
 
   /* 导航栏玻璃高光与发丝线（暗色） */
   --navbar-glass-highlight: rgba(255, 255, 255, 0.06)
@@ -125,7 +125,7 @@
   --link-hover: oklch(0.40 0.08 var(--hue))
   --link-active: oklch(0.35 0.07 var(--hue))
   
-  --float-panel-bg: oklch(0.19 0.015 var(--hue))
+  --float-panel-bg: oklch(0.17 0.02 var(--hue))
   
   --scrollbar-bg: var(--scrollbar-bg-dark)
   --scrollbar-bg-hover: var(--scrollbar-bg-hover-dark)

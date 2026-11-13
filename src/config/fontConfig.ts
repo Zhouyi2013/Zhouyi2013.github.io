@@ -35,6 +35,7 @@ export const fontsList: FontDefinition[] = [
 		styles: ["normal"],
 		subsets: ["latin", "cyrillic"],
 		fallbacks: ["sans-serif"],
+		display: "swap",
 	},
 	{
 		name: "Inter",
@@ -44,6 +45,7 @@ export const fontsList: FontDefinition[] = [
 		styles: ["normal"],
 		subsets: ["latin", "cyrillic"],
 		fallbacks: ["sans-serif"],
+		display: "swap",
 	},
 	{
 		name: "JetBrains Mono",
@@ -62,6 +64,7 @@ export const fontsList: FontDefinition[] = [
 			"Courier New",
 			"monospace",
 		],
+		display: "swap",
 	},
 	// ─── 本地字体示例 ───
 	// 使用步骤：
@@ -81,6 +84,20 @@ export const fontsList: FontDefinition[] = [
 		},
 		fallbacks: ["sans-serif"],
 	},
+	// ─── CDN 字体：霞鹜文楷（LXGW WenKai） ───
+	// 走 CDN 子集化加载（unicode-range + font-display: swap），不经过 Astro Font API，
+	// 浏览器只下载页面实际用到的字体分片，可显著提升加载速度。
+	// 只引入正文需要的常规(400) 与粗体(700)；代码字体仍用 JetBrains Mono，故不引入 Mono 族与 Light 字重。
+	{
+		name: "LXGW WenKai",
+		cssVariable: "--font-lxgw-wenkai",
+		provider: { name: "cdn" },
+		cdnUrl: [
+			"https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-regular.css",
+			"https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/lxgwwenkai-bold.css",
+		],
+		fallbacks: ["sans-serif"],
+	},
 ];
 
 // ─── 字体选择与区域覆盖 ─────────────────────────────────────
@@ -89,7 +106,8 @@ export const fontConfig: FontSelectionConfig = {
 	enable: true,
 	// 当前选择的字体 CSS 变量名（对应上方 fonts 中的 cssVariable）
 	// 使用 "system" 表示系统字体（不加载任何自定义字体）
-	selected: ["system"],
+	// 正文使用霞鹜文楷（LXGW WenKai，走 CDN 子集化加载）；banner/代码等区域仍用各自字体
+	selected: ["--font-lxgw-wenkai"],
 
 	// 各区域独立字体设置（填写上方 fonts 中的 cssVariable，留空则使用全局 selected 字体）
 	// 例如：bannerTitleFont: "--font-inter", 表示主页横幅主标题使用 Inter 字体

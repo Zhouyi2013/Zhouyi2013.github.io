@@ -1,0 +1,493 @@
+---
+// 鼠标动效：光晕跟随（glow orb）+ 浅色圆点拖尾（trail）+ 悬停光环（ring）+
+// 点击涟漪（pulse）+ 卡片聚光（spotlight）。
+//
+// 性能设计（不影响页面加载速度）：
+// - 零额外网络请求：纯内联 JS + CSS，模块约 2KB（gzip 后约 1.2KB），随页面脚本延迟执行；
+// - 只用 transform / opacity 等合成器友好属性，不触发 layout；
+// - 单个 passive pointermove 监听 + 单个 rAF 循环，鼠标空闲 2.5s 后自动挂起，
+//   无常驻帧循环、无持续功耗；
+// - 仅精确指针设备（pointer: fine）生效，触屏/笔设备完全不初始化；
+// - prefers-reduced-motion 开启时自动禁用，并监听其切换。
+//
+// 配置见 src/config/effectsConfig.ts（cursorFxConfig）。
+// 卡片聚光依赖 tech-theme.css 中 .post-card-wrapper::before 的 --spot-x/--spot-y 变量。
+---
+
+<style is:global>
+  #cursor-glow,
+  #cursor-ring,
+  #cursor-pulse {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  /* 光晕：大半径柔光，跟随鼠标（lerp 缓动），空闲淡出 */
+  #cursor-glow {
+    width: min(var(--cursor-glow-size, 340px), 60vw);
+    height: min(var(--cursor-glow-size, 340px), 60vw);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      var(--cursor-glow-color, oklch(0.75 0.12 225 / 0.16)) 0%,
+      transparent 62%
+    );
+    transition: opacity 0.5s ease;
+  }
+
+  /* 拖尾容器：只动 opacity（不加 transform，避免成为 fixed 子元素的包含块） */
+  #cursor-trail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+
+  /* 拖尾圆点：柔光浅色圆，尺寸/透明度创建时固定，位置由 rAF transform 驱动 */
+  .cursor-trail-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    background: radial-gradient(
+      circle,
+      var(--cursor-trail-color, oklch(0.85 0.1 220 / 0.6)) 0%,
+      transparent 65%
+    );
+  }
+
+  :root.dark .cursor-trail-dot {
+    background: radial-gradient(
+      circle,
+      oklch(0.9 0.09 205 / 0.55) 0%,
+      transparent 65%
+    );
+  }
+
+  /* 悬停光环：始终微可见，悬停可交互元素时放大 */
+  #cursor-ring {
+    width: var(--cursor-ring-size, 26px);
+    height: var(--cursor-ring-size, 26px);
+    border-radius: 50%;
+    border: 1.5px solid oklch(0.72 0.12 225 / 0.5);
+    transition: opacity 0.4s ease;
+  }
+
+  :root.dark #cursor-ring {
+    border-color: oklch(0.85 0.11 200 / 0.55);
+  }
+
+  /* 点击涟漪：由 Web Animations API 驱动（合成器执行） */
+  #cursor-pulse {
+    width: 56px;
+    height: 56px;
+    margin: -28px 0 0 -28px;
+    border-radius: 50%;
+    border: 2px solid oklch(0.78 0.12 225 / 0.6);
+  }
+
+  :root.dark #cursor-pulse {
+    border-color: oklch(0.85 0.11 200 / 0.6);
+  }
+
+  /* 激活态由 html.cursor-fx-active 切换（透明度走 transition，位置走 rAF transform） */
+  html.cursor-fx-active #cursor-glow,
+  html.cursor-fx-active #cursor-ring,
+  html.cursor-fx-active #cursor-trail {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #cursor-glow,
+    #cursor-ring,
+    #cursor-pulse,
+    #cursor-trail {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+	import { cursorFxConfig } from "@/config";
+	import type { CursorFxConfig } from "@/types/effectsConfig";
+
+	// 可交互元素（光环放大目标）：链接、按钮、折叠项
+	const INTERACTIVE_SELECTOR =
+		'a[href], button:not(:disabled), [role="button"], summary';
+	// 卡片聚光宿主（CSS 见 tech-theme.css 的 .post-card-wrapper::before）
+	const SPOTLIGHT_SELECTOR = ".post-card-wrapper";
+
+	const IDLE_HIDE_MS = 2500; // 鼠标空闲多久后淡出动效
+	const SETTLE_EPS = 0.5; // 位置收敛判定阈值（px）
+
+	class CursorFxManager {
+		config: CursorFxConfig;
+		isRunning = false;
+
+		private glowEl: HTMLDivElement | null = null;
+		private ringEl: HTMLDivElement | null = null;
+		private pulseEl: HTMLDivElement | null = null;
+		private trailEl: HTMLDivElement | null = null;
+		private trailDots: HTMLDivElement[] = [];
+		// 拖尾圆点各自的 lerp 位置 / 跟随系数 / 半径（系数随序号递减，尾部滞后最多）
+		private trailXs: number[] = [];
+		private trailYs: number[] = [];
+		private trailKs: number[] = [];
+		private trailHalves: number[] = [];
+		private trailPrimed = false;
+
+		// 目标位置 / 当前位置（光晕慢、光环快）
+		private tx = 0;
+		private ty = 0;
+		private gx = 0;
+		private gy = 0;
+		private rx = 0;
+		private ry = 0;
+		// 光环缩放（悬停可交互元素时放大）
+		private ringScale = 1;
+		private ringScaleTarget = 1;
+
+		private rafId: number | null = null;
+		private lastMoveAt = 0;
+		// 聚光宿主与缓存 rect（宿主切换时才重取，避免每帧读布局）
+		private spotHost: HTMLElement | null = null;
+		private spotRect: DOMRect | null = null;
+		private reducedMotion = false;
+		private reducedMotionQuery: MediaQueryList | null = null;
+
+		private boundPointerMove: ((e: PointerEvent) => void) | null = null;
+		private boundPointerOver: ((e: PointerEvent) => void) | null = null;
+		private boundPointerDown: ((e: PointerEvent) => void) | null = null;
+		private boundLeaveWindow: (() => void) | null = null;
+		private boundReducedMotion: ((e: MediaQueryListEvent) => void) | null = null;
+
+		constructor(config: CursorFxConfig) {
+			this.config = config;
+		}
+
+		/** 创建拖尾圆点：尺寸/透明度从头部到尾部递减，跟随系数递减（尾部滞后最多） */
+		private createTrail(): HTMLDivElement {
+			const trailEl = document.createElement("div");
+			trailEl.id = "cursor-trail";
+			this.trailEl = trailEl;
+			this.trailDots = [];
+			this.trailXs = [];
+			this.trailYs = [];
+			this.trailKs = [];
+			this.trailHalves = [];
+			this.trailPrimed = false;
+
+			const n = this.config.trailCount;
+			if (n <= 0) return trailEl;
+			const base = this.config.trailSize;
+			for (let i = 0; i < n; i++) {
+				const t = n === 1 ? 0 : i / (n - 1);
+				const size = base * (1 - t * 0.7);
+				const dot = document.createElement("div");
+				dot.className = "cursor-trail-dot";
+				dot.style.width = `${size}px`;
+				dot.style.height = `${size}px`;
+				dot.style.opacity = (0.55 * Math.pow(1 - t, 1.4) + 0.04).toFixed(3);
+				trailEl.appendChild(dot);
+				this.trailDots.push(dot);
+				this.trailXs.push(0);
+				this.trailYs.push(0);
+				this.trailKs.push(0.45 - (0.45 - 0.12) * t);
+				this.trailHalves.push(size / 2);
+			}
+			return trailEl;
+		}
+
+		init() {
+			if (this.isRunning) return;
+			this.isRunning = true;
+
+			// 精确指针 + 非减弱动效才生效
+			const finePointer = window.matchMedia("(pointer: fine)").matches;
+			this.reducedMotionQuery = window.matchMedia(
+				"(prefers-reduced-motion: reduce)",
+			);
+			this.reducedMotion = this.reducedMotionQuery.matches;
+			if (!finePointer || this.reducedMotion) {
+				this.isRunning = false;
+				this.reducedMotionQuery?.addEventListener("change", this.onReducedMotionChange());
+				return;
+			}
+
+			// CSS 变量注入（尺寸/颜色来自构建期配置）
+			const rootStyle = document.documentElement.style;
+			rootStyle.setProperty("--cursor-glow-size", `${this.config.glowSize}px`);
+			rootStyle.setProperty("--cursor-glow-color", this.config.glowColor);
+			rootStyle.setProperty("--cursor-ring-size", `${this.config.ringSize}px`);
+			rootStyle.setProperty("--cursor-trail-color", this.config.trailColor);
+
+			this.glowEl = document.createElement("div");
+			this.glowEl.id = "cursor-glow";
+			this.ringEl = document.createElement("div");
+			this.ringEl.id = "cursor-ring";
+			this.pulseEl = document.createElement("div");
+			this.pulseEl.id = "cursor-pulse";
+			const trailEl = this.createTrail();
+			document.body.append(this.glowEl, trailEl, this.ringEl, this.pulseEl);
+
+			this.boundPointerMove = (e: PointerEvent) => this.onPointerMove(e);
+			this.boundPointerOver = (e: PointerEvent) => this.onPointerOver(e);
+			this.boundPointerDown = (e: PointerEvent) => this.onPointerDown(e);
+			this.boundLeaveWindow = () => this.deactivate();
+			this.boundReducedMotion = (e: MediaQueryListEvent) => {
+				if (e.matches === this.reducedMotion) return;
+				this.reducedMotion = e.matches;
+				if (e.matches) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			};
+
+			document.addEventListener("pointermove", this.boundPointerMove, { passive: true });
+			document.addEventListener("pointerover", this.boundPointerOver, { passive: true });
+			document.addEventListener("pointerdown", this.boundPointerDown, { passive: true });
+			document.documentElement.addEventListener("mouseleave", this.boundLeaveWindow);
+			this.reducedMotionQuery.addEventListener("change", this.boundReducedMotion);
+		}
+
+		/** pointermove 只记目标位置，真正更新在 rAF 内统一执行（天然节流到帧率） */
+		private onPointerMove(e: PointerEvent) {
+			this.tx = e.clientX;
+			this.ty = e.clientY;
+			this.lastMoveAt = performance.now();
+			if (!this.reducedMotion) this.ensureActive();
+		}
+
+		/** pointerover 只在目标切换时触发：判断可交互态 + 聚光宿主（各一次 closest） */
+		private onPointerOver(e: PointerEvent) {
+			const target = e.target as Element | null;
+			const interactive =
+				target instanceof Element
+					? !!target.closest(INTERACTIVE_SELECTOR)
+					: false;
+			this.ringScaleTarget = interactive ? 1.55 : 1;
+
+			const host =
+				target instanceof Element
+					? target.closest<HTMLElement>(SPOTLIGHT_SELECTOR)
+					: null;
+			if (host !== this.spotHost) {
+				this.spotHost = host;
+				this.spotRect = host ? host.getBoundingClientRect() : null;
+			}
+		}
+
+		private onPointerDown(e: PointerEvent) {
+			if (e.button !== 0 || !this.pulseEl) return;
+			const x = e.clientX;
+			const y = e.clientY;
+			// Web Animations API：合成器驱动，不占主线程
+			this.pulseEl.style.transform = `translate3d(${x}px, ${y}px, 0) scale(0)`;
+			this.pulseEl.animate(
+				[
+					{
+						transform: `translate3d(${x}px, ${y}px, 0) scale(0.2)`,
+						opacity: 0.55,
+					},
+					{
+						transform: `translate3d(${x}px, ${y}px, 0) scale(1.6)`,
+						opacity: 0,
+					},
+				],
+				{ duration: 450, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+			);
+		}
+
+		private ensureActive() {
+			if (this.glowEl && !document.documentElement.classList.contains("cursor-fx-active")) {
+				// 首次激活：从当前位置起步，避免从左上角飞入
+				if (this.gx === 0 && this.gy === 0) {
+					this.gx = this.tx;
+					this.gy = this.ty;
+				}
+				if (this.rx === 0 && this.ry === 0) {
+					this.rx = this.tx;
+					this.ry = this.ty;
+				}
+				if (!this.trailPrimed) {
+					this.trailPrimed = true;
+					// 拖尾圆点也从当前位置起步，避免从左上角飞入
+					for (let i = 0; i < this.trailXs.length; i++) {
+						this.trailXs[i] = this.tx;
+						this.trailYs[i] = this.ty;
+					}
+				}
+				document.documentElement.classList.add("cursor-fx-active");
+			}
+			if (this.rafId === null) {
+				this.rafId = requestAnimationFrame(this.tick);
+			}
+		}
+
+		private deactivate() {
+			document.documentElement.classList.remove("cursor-fx-active");
+			this.stopLoop();
+			this.spotHost = null;
+			this.spotRect = null;
+		}
+
+		private stopLoop() {
+			if (this.rafId !== null) {
+				cancelAnimationFrame(this.rafId);
+				this.rafId = null;
+			}
+		}
+
+		private tick = (now: number) => {
+			this.rafId = null;
+
+			const k = this.config.followLerp;
+			this.gx += (this.tx - this.gx) * k;
+			this.gy += (this.ty - this.gy) * k;
+			this.rx += (this.tx - this.rx) * k * 1.9;
+			this.ry += (this.ty - this.ry) * k * 1.9;
+			this.ringScale += (this.ringScaleTarget - this.ringScale) * 0.22;
+
+			if (this.glowEl) {
+				const half = this.config.glowSize / 2;
+				this.glowEl.style.transform = `translate3d(${this.gx - half}px, ${this.gy - half}px, 0)`;
+			}
+			if (this.ringEl) {
+				const half = this.config.ringSize / 2;
+				this.ringEl.style.transform = `translate3d(${this.rx - half}px, ${this.ry - half}px, 0) scale(${this.ringScale})`;
+			}
+
+			// 拖尾：每个圆点按各自系数跟随指针，间距随移动速度自然拉伸
+			for (let i = 0; i < this.trailDots.length; i++) {
+				this.trailXs[i] += (this.tx - this.trailXs[i]) * this.trailKs[i];
+				this.trailYs[i] += (this.ty - this.trailYs[i]) * this.trailKs[i];
+				this.trailDots[i].style.transform = `translate3d(${this.trailXs[i] - this.trailHalves[i]}px, ${this.trailYs[i] - this.trailHalves[i]}px, 0)`;
+			}
+
+			// 卡片聚光：把指针坐标（相对卡片）写入 CSS 变量，CSS 端渲染 radial-gradient
+			if (this.spotHost && this.spotRect) {
+				this.spotHost.style.setProperty("--spot-x", `${this.tx - this.spotRect.left}px`);
+				this.spotHost.style.setProperty("--spot-y", `${this.ty - this.spotRect.top}px`);
+			}
+
+			const settled =
+				Math.abs(this.tx - this.gx) < SETTLE_EPS &&
+				Math.abs(this.ty - this.gy) < SETTLE_EPS &&
+				Math.abs(this.tx - this.rx) < SETTLE_EPS &&
+				Math.abs(this.ty - this.ry) < SETTLE_EPS &&
+				Math.abs(this.ringScaleTarget - this.ringScale) < 0.005 &&
+				// 尾部圆点跟随系数最小、收敛最慢：它到位则全部到位
+				(this.trailXs.length === 0 ||
+					(Math.abs(this.tx - this.trailXs[this.trailXs.length - 1]) < SETTLE_EPS &&
+						Math.abs(this.ty - this.trailYs[this.trailYs.length - 1]) < SETTLE_EPS));
+			const idle = now - this.lastMoveAt > IDLE_HIDE_MS;
+
+			if (idle) {
+				this.deactivate(); // 透明度由 CSS transition 淡出
+				return;
+			}
+			if (!settled) {
+				this.rafId = requestAnimationFrame(this.tick);
+			}
+			// settled 且未空闲：停止循环等待下次 pointermove 再启动（零常驻开销）
+		};
+
+		onReducedMotionChange() {
+			return (e: MediaQueryListEvent) => {
+				// 仅允许开启（init 内有重复守卫）；关闭由 boundReducedMotion 处理
+				if (!e.matches && !this.isRunning) {
+					this.init();
+				}
+			};
+		}
+
+		stop() {
+			this.stopLoop();
+			if (this.boundPointerMove) {
+				document.removeEventListener("pointermove", this.boundPointerMove);
+			}
+			if (this.boundPointerOver) {
+				document.removeEventListener("pointerover", this.boundPointerOver);
+			}
+			if (this.boundPointerDown) {
+				document.removeEventListener("pointerdown", this.boundPointerDown);
+			}
+			if (this.boundLeaveWindow) {
+				document.documentElement.removeEventListener("mouseleave", this.boundLeaveWindow);
+			}
+			if (this.boundReducedMotion) {
+				this.reducedMotionQuery?.removeEventListener("change", this.boundReducedMotion);
+			}
+			this.glowEl?.remove();
+			this.ringEl?.remove();
+			this.pulseEl?.remove();
+			this.trailEl?.remove();
+			this.glowEl = this.ringEl = this.pulseEl = null;
+			this.trailEl = null;
+			this.trailDots = [];
+			this.trailXs = [];
+			this.trailYs = [];
+			this.trailKs = [];
+			this.trailHalves = [];
+			this.trailPrimed = false;
+			this.spotHost = null;
+			this.spotRect = null;
+			this.deactivate();
+			this.isRunning = false;
+		}
+
+		getIsRunning() {
+			return this.isRunning;
+		}
+	}
+
+	// ===========================================================================
+	// 入口：幂等初始化 + 用户开关（localStorage 覆盖 + 设置面板事件）
+	// 守卫确保 Swup 切页重跑模块化脚本时不会重复初始化或重复注册监听器
+	// ===========================================================================
+	(function setupCursorFx() {
+		if (window.cursorFxInitialized) return;
+		window.cursorFxInitialized = true;
+
+		const stored = localStorage.getItem("cursorFxEnabled");
+		const enabled =
+			stored !== null ? stored === "true" : cursorFxConfig.enable;
+
+		if (enabled) {
+			const manager = new CursorFxManager(cursorFxConfig);
+			window.cursorFxManager = manager;
+			manager.init();
+		}
+
+		// 与 sakuraToggle 一致的面板事件契约（供显示设置面板接入）
+		window.addEventListener("cursorFxToggle", (e: Event) => {
+			const detail = (e as CustomEvent<{ enabled: boolean }>).detail;
+			if (!detail) return;
+			const mgr = window.cursorFxManager;
+			if (detail.enabled) {
+				if (!mgr) {
+					const manager = new CursorFxManager(cursorFxConfig);
+					window.cursorFxManager = manager;
+				}
+				if (!window.cursorFxManager!.getIsRunning()) {
+					window.cursorFxManager!.init();
+				}
+			} else if (mgr?.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();
+</script>

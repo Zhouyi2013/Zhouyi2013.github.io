@@ -1,6 +1,20 @@
-import type { SakuraConfig } from "../types/effectsConfig";
+import type { CursorFxConfig, SakuraConfig } from "../types/effectsConfig";
 
 // 特效配置 - 集中管理所有动画特效
+
+// 鼠标动效：纯 transform/opacity 合成层动画，rAF 循环随鼠标空闲自动挂起，
+// 零额外网络请求，对加载速度无可测影响。仅在精确指针设备（pointer: fine）
+// 且未开启「减弱动态效果」时生效。
+export const cursorFxConfig: CursorFxConfig = {
+	enable: true,
+	glowSize: 340,
+	glowColor: "oklch(0.75 0.12 225 / 0.16)",
+	ringSize: 26,
+	followLerp: 0.16,
+	trailCount: 7,
+	trailSize: 12,
+	trailColor: "oklch(0.85 0.1 220 / 0.6)",
+};
 
 export const sakuraConfig: SakuraConfig = {
 	// 是否启用樱花特效

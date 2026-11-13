@@ -5,6 +5,7 @@ import MicrosoftClarity from "@components/analytics/MicrosoftClarity.astro";
 import UmamiAnalytics from "@components/analytics/UmamiAnalytics.astro";
 import CodeGroupManager from "@components/features/CodeGroupManager.astro";
 import ContextMenu from "@components/features/ContextMenu.astro";
+import CursorFx from "@components/features/CursorFx.astro";
 import FancyboxManager from "@components/features/FancyboxManager.astro";
 import FontSetup from "@components/features/FontSetup.astro";
 import GithubCardManager from "@components/features/GithubCardManager.astro";
@@ -572,6 +573,9 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 
     <!-- Sakura Effect -->
     <SakuraEffect />
+
+    <!-- Mouse Cursor Effects (glow follower / hover ring / click pulse / card spotlight) -->
+    <CursorFx />
 
     <!-- Water Waves Effect -->
     <WavesEffect />

@@ -1,3 +1,4 @@
+import type { CursorFxManagerLike } from "./types/effectsConfig";
 import type { SakuraManagerLike } from "./types/sakura-worker";
 import type { WavesManagerLike } from "./types/waves";
 
@@ -73,6 +74,10 @@ declare global {
 		sakuraManager?: SakuraManagerLike;
 		/** 樱花特效初始化守卫,确保只初始化一次(Swup 切页重跑脚本时复用) */
 		sakuraInitialized?: boolean;
+		/** 鼠标动效管理器(光晕跟随/悬停光环/点击涟漪/卡片聚光) */
+		cursorFxManager?: CursorFxManagerLike;
+		/** 鼠标动效初始化守卫,确保只初始化一次(Swup 切页重跑脚本时复用) */
+		cursorFxInitialized?: boolean;
 		/** 水波纹特效管理器(主线程 Canvas 2D 实现) */
 		wavesManager?: WavesManagerLike;
 		/** 水波纹特效初始化守卫,确保只初始化一次(Swup 切页重跑脚本时复用) */

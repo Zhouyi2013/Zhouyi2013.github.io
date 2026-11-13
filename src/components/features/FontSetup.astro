@@ -9,7 +9,7 @@
  * 字体的 fallback 由各字体定义中的 fallbacks 字段控制（Astro Font API 处理），
  */
 import { Font } from "astro:assets";
-import { fontConfig } from "@/config";
+import { fontConfig, fontsList } from "@/config";
 import { collectUsedFontCssVars } from "@/utils/fontHelper";
 
 // 使用共享的工具函数收集所有需要加载的 CSS 变量名（selected + 各区域字体，去重）
@@ -17,6 +17,52 @@ import { collectUsedFontCssVars } from "@/utils/fontHelper";
 const allCssVars = fontConfig.enable
 	? collectUsedFontCssVars(fontConfig)
 	: new Set<string>();
+
+// cssVariable → 字体定义 的映射，用于区分「Astro Font API 字体」与「CDN 字体」
+const fontByCssVar = new Map(fontsList.map((f) => [f.cssVariable, f]));
+
+// 拆分两类字体：
+// - astroCssVars：由 Astro Font API 管理，渲染 <Font />（自动下载、缓存、生成 @font-face）
+// - cdnFonts：自带 CDN 子集化（unicode-range + font-display: swap）的字体，
+//   直接输出 <link rel="stylesheet"> + CSS 变量，浏览器只下载实际用到的字体分片
+const astroCssVars: string[] = [];
+const cdnFonts: Array<{
+	cssVariable: string;
+	name: string;
+	urls: string[];
+	fallbacks: string[];
+}> = [];
+for (const v of allCssVars) {
+	const f = fontByCssVar.get(v);
+	if (f?.cdnUrl) {
+		cdnFonts.push({
+			cssVariable: v,
+			name: f.name,
+			urls: Array.isArray(f.cdnUrl) ? f.cdnUrl : [f.cdnUrl],
+			fallbacks: f.fallbacks ?? ["sans-serif"],
+		});
+	} else {
+		astroCssVars.push(v);
+	}
+}
+
+// 所有 CDN 字体样式表 URL（扁平化，用于逐个输出 <link>）
+const cdnUrls: string[] = cdnFonts.flatMap((f) => f.urls);
+
+// 去重后的 CDN 源（用于 preconnect，提前完成 DNS + TCP/TLS 握手，省掉首字节前的 RTT）
+const cdnOrigins = [
+	...new Set(
+		cdnUrls
+			.map((u) => {
+				try {
+					return new URL(u).origin;
+				} catch {
+					return null;
+				}
+			})
+			.filter((o): o is string => !!o),
+	),
+];
 
 // 统一解析 selected 为数组（用于后续 body font-family 和 preload 判断）
 const selectedIds: string[] =
@@ -58,14 +104,47 @@ const codeFontVar = fontConfig.enable ? fontConfig.codeFont || "" : "";
 const codeFontFamily = codeFontVar
 	? `var(${codeFontVar}, ${MONO_FONT_STACK})`
 	: MONO_FONT_STACK;
+// CDN 字体定义的 CSS 变量（形如：--font-lxgw-wenkai: "LXGW WenKai", sans-serif;）
+const cdnVarDeclarations = cdnFonts
+	.map((f) => `${f.cssVariable}: "${f.name}", ${f.fallbacks.join(", ")};`)
+	.join("\n    ");
+
+// 首屏字体：正文 selected 字体 + banner/导航栏区域字体都在首屏可见（LCP 相关），
+// 全部 preload，让字体文件与页面 HTML 并行下载，避免 swap 前的回退字体闪烁
+const lcpFontVars = new Set(
+	[
+		...selectedFontVars,
+		bannerTitleFontVar,
+		bannerSubtitleFontVar,
+		navbarTitleFontVar,
+	].filter((v): v is string => !!v),
+);
 ---
 
 <!-- Astro Font API: 自动下载、缓存并生成优化的 @font-face -->
-{Array.from(allCssVars).map((cssVar) => (
+{astroCssVars.map((cssVar) => (
   <Font
     cssVariable={cssVar as any}
-    preload={selectedFontVars.includes(cssVar)}
+    preload={lcpFontVars.has(cssVar)}
   />
+))}
+
+<!-- CDN 字体：preconnect 源站（含 crossorigin 双池，兼容不同加载模式）+
+     高优先级 preload 第一份 CSS，与 HTML 解析并行，显著降低首屏字体等待 -->
+{cdnOrigins.map((origin) => (
+  <>
+    <link rel="preconnect" href={origin} />
+    <link rel="preconnect" href={origin} crossorigin />
+  </>
+))}
+{cdnUrls.length > 0 && (
+  <link rel="preload" href={cdnUrls[0]} as="style" fetchpriority="high" />
+)}
+
+<!-- CDN 字体样式表：自带 unicode-range 子集化 + font-display: swap，
+     浏览器只下载页面实际用到的字体分片，不经过 Astro Font API -->
+{cdnUrls.map((url) => (
+  <link rel="stylesheet" href={url} />
 ))}
 
 <!-- 区域字体 CSS 变量 + body 字体 -->
@@ -74,6 +153,7 @@ const codeFontFamily = codeFontVar
   set:html={`
   :root {
     --font-code: ${codeFontFamily};
+    ${cdnVarDeclarations}
     ${bannerTitleFontVar ? `--font-banner-title: var(${bannerTitleFontVar}, inherit);` : ""}
     ${bannerSubtitleFontVar ? `--font-banner-subtitle: var(${bannerSubtitleFontVar}, inherit);` : ""}
     ${navbarTitleFontVar ? `--font-navbar-title: var(${navbarTitleFontVar}, inherit);` : ""}
