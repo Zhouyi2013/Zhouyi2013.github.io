@@ -1,0 +1,297 @@
+/* ==========================================================================
+   Enhanced Animations – Lightweight, GPU-friendly, CSS-only
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Keyframes
+   -------------------------------------------------------------------------- */
+
+/* 卡片进入动画：淡入 + 轻微上移 */
+@keyframes card-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 标题渐入：纯 opacity 淡入。
+   注意：不要对 .post-card-title 用 transform 动画——fill-mode: forwards 会让标题
+   持续持有 transform，把 ::before 竖线（absolute）的包含块从卡片抢过来，
+   竖线 left:18px 会变成相对标题定位而整体右移跑偏 */
+@keyframes title-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 描述渐入：轻微延迟 + 上移 */
+@keyframes desc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Banner 标题渐入 */
+@keyframes banner-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(2rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Banner 副标题渐入 */
+@keyframes banner-subtitle-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 导航栏按钮弹性缩放 */
+@keyframes btn-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* 侧边栏组件渐入 */
+@keyframes sidebar-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 滚动指示器弹跳 */
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* 封面图片缩放 */
+@keyframes cover-zoom-in {
+  from {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Post Card Animations
+   -------------------------------------------------------------------------- */
+
+/* 文章卡片进入动画 */
+.post-card-wrapper {
+  opacity: 0;
+  animation: card-fade-in-up 0.4s ease-out forwards;
+}
+
+/* 渐进式延迟 */
+.post-card-wrapper:nth-child(1) { animation-delay: 0ms; }
+.post-card-wrapper:nth-child(2) { animation-delay: 60ms; }
+.post-card-wrapper:nth-child(3) { animation-delay: 120ms; }
+.post-card-wrapper:nth-child(4) { animation-delay: 180ms; }
+.post-card-wrapper:nth-child(5) { animation-delay: 240ms; }
+.post-card-wrapper:nth-child(6) { animation-delay: 300ms; }
+.post-card-wrapper:nth-child(7) { animation-delay: 360ms; }
+.post-card-wrapper:nth-child(8) { animation-delay: 420ms; }
+.post-card-wrapper:nth-child(9) { animation-delay: 480ms; }
+.post-card-wrapper:nth-child(10) { animation-delay: 540ms; }
+
+/* 卡片 hover 效果：轻微上浮 + 阴影 */
+.post-card-wrapper {
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+.post-card-wrapper:hover {
+  transform: translateY(-2px);
+}
+.enable-card-border .post-card-wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+:root.dark .enable-card-border .post-card-wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 封面图片缩放 */
+.post-card-image .cover-image-container img {
+  transition: transform 0.4s ease-out;
+}
+.post-card-image:hover .cover-image-container img {
+  transform: scale(1.08);
+}
+
+/* 标题渐入（纯 opacity，保持 ::before 竖线相对卡片的定位基准） */
+.post-card-title {
+  opacity: 0;
+  animation: title-fade-in 0.3s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+/* 描述渐入 */
+.post-card-content .description {
+  opacity: 0;
+  animation: desc-fade-in 0.3s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* --------------------------------------------------------------------------
+   3. Banner Animations
+   -------------------------------------------------------------------------- */
+
+/* Banner 标题渐入 */
+.banner-home-text-overlay .banner-title {
+  opacity: 0;
+  animation: banner-title-in 0.6s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* Banner 副标题渐入 */
+.banner-home-text-overlay .banner-subtitle {
+  opacity: 0;
+  animation: banner-subtitle-in 0.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+/* Banner 链接图标渐入 */
+.banner-home-text-overlay .banner-links {
+  opacity: 0;
+  animation: banner-subtitle-in 0.4s ease-out forwards;
+  animation-delay: 0.8s;
+}
+
+/* 滚动指示器 */
+.scroll-down-indicator .scroll-down-icon {
+  animation: scroll-bounce 2s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   4. Navbar Animations
+   -------------------------------------------------------------------------- */
+
+/* 导航栏按钮弹性缩放 */
+#navbar .btn-plain {
+  transition: transform 0.2s ease-out;
+}
+#navbar .btn-plain:active {
+  transform: scale(0.92);
+}
+#navbar .btn-plain:hover {
+  transform: scale(1.05);
+}
+
+/* 导航栏下拉菜单 */
+.dropdown-content {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   5. Sidebar Animations
+   -------------------------------------------------------------------------- */
+
+/* 侧边栏组件渐入 */
+#left-sidebar .widget,
+#right-sidebar .widget {
+  opacity: 0;
+  animation: sidebar-fade-in 0.3s ease-out forwards;
+}
+#left-sidebar .widget:nth-child(1) { animation-delay: 0.1s; }
+#left-sidebar .widget:nth-child(2) { animation-delay: 0.2s; }
+#left-sidebar .widget:nth-child(3) { animation-delay: 0.3s; }
+#left-sidebar .widget:nth-child(4) { animation-delay: 0.4s; }
+#left-sidebar .widget:nth-child(5) { animation-delay: 0.5s; }
+
+#right-sidebar .widget:nth-child(1) { animation-delay: 0.1s; }
+#right-sidebar .widget:nth-child(2) { animation-delay: 0.2s; }
+#right-sidebar .widget:nth-child(3) { animation-delay: 0.3s; }
+#right-sidebar .widget:nth-child(4) { animation-delay: 0.4s; }
+#right-sidebar .widget:nth-child(5) { animation-delay: 0.5s; }
+
+/* --------------------------------------------------------------------------
+   6. Floating Controls Animations
+   -------------------------------------------------------------------------- */
+
+/* 浮动按钮 */
+.floating-btn {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+.floating-btn:hover {
+  transform: translateY(-2px);
+}
+.floating-btn:active {
+  transform: scale(0.95);
+}
+
+/* --------------------------------------------------------------------------
+   7. Page Transition Enhancements
+   -------------------------------------------------------------------------- */
+
+/* 页面切换期间禁用卡片动画，避免与 Swup 过渡冲突 */
+html.is-changing .post-card-wrapper,
+html.is-animating .post-card-wrapper {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Reduced Motion
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card-wrapper,
+  .post-card-title,
+  .post-card-content .description,
+  .banner-home-text-overlay .banner-title,
+  .banner-home-text-overlay .banner-subtitle,
+  .banner-home-text-overlay .banner-links,
+  .scroll-down-indicator .scroll-down-icon,
+  #left-sidebar .widget,
+  #right-sidebar .widget,
+  .floating-btn {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  
+  .post-card-wrapper:hover,
+  .post-card-image:hover .cover-image-container img,
+  #navbar .btn-plain:hover,
+  #navbar .btn-plain:active,
+  .floating-btn:hover,
+  .floating-btn:active {
+    transform: none !important;
+  }
+  
+  .post-card-wrapper,
+  .post-card-image .cover-image-container img,
+  #navbar .btn-plain,
+  .floating-btn,
+  .dropdown-content {
+    transition: none !important;
+  }
+}

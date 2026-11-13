@@ -1,0 +1,282 @@
+---
+// 自定义右键菜单（美化 + 实用功能）
+// - 替代浏览器原生右键菜单，跟随主题色与深浅色模式
+// - 功能区：导航操作（回顶部/刷新/前进/后退）+ 快捷链接（搜索/RSS/GitHub）
+// - 纯 CSS 过渡 + 少量原生 JS，无第三方依赖；选中文本时保留原生菜单
+// - 配置项集中在 define:vars：站点名、RSS/GitHub 地址
+import { Icon } from "astro-icon/components";
+import { profileConfig, siteConfig } from "@/config";
+import { url } from "@/utils/url-utils";
+
+const siteName = siteConfig.navbar.title || siteConfig.title;
+const githubUrl =
+	profileConfig.links.find((l) => l.url.includes("github.com"))?.url ??
+	"https://github.com";
+const rssUrl = url("/rss/");
+---
+
+<div
+	id="context-menu"
+	class="ctx-menu"
+	aria-orientation="vertical"
+	role="menu"
+	aria-hidden="true"
+>
+	<!-- 站点信息区 -->
+	<div class="ctx-header" role="presentation">
+		<div class="ctx-header-name">{siteName}</div>
+		<div class="ctx-header-bio">{profileConfig.bio}</div>
+	</div>
+
+	<!-- 导航操作 -->
+	<div class="ctx-group" role="group" aria-label="导航操作">
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="top">
+			<Icon name="material-symbols:vertical-align-top-rounded" class="ctx-icon" />
+			<span>回到顶部</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="reload">
+			<Icon name="material-symbols:refresh-rounded" class="ctx-icon" />
+			<span>刷新页面</span>
+		</button>
+		<button
+			type="button"
+			class="ctx-item"
+			role="menuitem"
+			data-ctx-action="back"
+		>
+			<Icon name="material-symbols:arrow-back-rounded" class="ctx-icon" />
+			<span>后退</span>
+		</button>
+		<button
+			type="button"
+			class="ctx-item"
+			role="menuitem"
+			data-ctx-action="forward"
+		>
+			<Icon name="material-symbols:arrow-forward-rounded" class="ctx-icon" />
+			<span>前进</span>
+		</button>
+	</div>
+
+	<!-- 快捷链接 -->
+	<div class="ctx-group" role="group" aria-label="快捷链接">
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="search">
+			<Icon name="material-symbols:search-rounded" class="ctx-icon" />
+			<span>搜索</span>
+		</button>
+		<a class="ctx-item" role="menuitem" href={rssUrl}>
+			<Icon name="fa7-solid:rss" class="ctx-icon" />
+			<span>RSS 订阅</span>
+		</a>
+		<a
+			class="ctx-item"
+			role="menuitem"
+			href={githubUrl}
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			<Icon name="fa7-brands:github" class="ctx-icon" />
+			<span>GitHub</span>
+		</a>
+	</div>
+</div>
+
+<style>
+	.ctx-menu {
+		position: fixed;
+		z-index: 10000;
+		min-width: 13rem;
+		padding: 0.375rem;
+		border-radius: calc(var(--radius-large) * 0.9);
+		background: var(--card-bg);
+		border: 1px solid var(--line-divider);
+		box-shadow:
+			0 8px 32px rgba(0, 0, 0, 0.12),
+			0 2px 8px rgba(0, 0, 0, 0.08);
+		opacity: 0;
+		visibility: hidden;
+		transform: scale(0.92) translateY(4px);
+		transform-origin: top left;
+		transition:
+			opacity 0.16s ease-out,
+			transform 0.16s ease-out,
+			visibility 0s linear 0.16s;
+		pointer-events: none;
+	}
+
+	/* 暗色模式阴影加深 */
+	:root.dark .ctx-menu {
+		box-shadow:
+			0 8px 32px rgba(0, 0, 0, 0.45),
+			0 2px 8px rgba(0, 0, 0, 0.3);
+	}
+
+	.ctx-menu.open {
+		opacity: 1;
+		visibility: visible;
+		transform: scale(1) translateY(0);
+		transition:
+			opacity 0.16s ease-out,
+			transform 0.16s ease-out;
+		pointer-events: auto;
+	}
+
+	/* 站点信息区 */
+	.ctx-header {
+		padding: 0.5rem 0.625rem 0.625rem;
+		margin-bottom: 0.25rem;
+		border-bottom: 1px solid var(--line-divider);
+	}
+
+	.ctx-header-name {
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--primary);
+	}
+
+	.ctx-header-bio {
+		margin-top: 0.125rem;
+		font-size: 0.75rem;
+		color: var(--text-secondary, rgb(0 0 0 / 50%));
+	}
+
+	:root.dark .ctx-header-bio {
+		color: rgb(255 255 255 / 50%);
+	}
+
+	/* 分组间距 */
+	.ctx-group {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		padding-block: 0.125rem;
+	}
+
+	.ctx-group + .ctx-group {
+		border-top: 1px solid var(--line-divider);
+		margin-top: 0.125rem;
+		padding-top: 0.25rem;
+	}
+
+	/* 菜单项 */
+	.ctx-item {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		width: 100%;
+		padding: 0.5rem 0.625rem;
+		border: 0;
+		border-radius: calc(var(--radius-large) * 0.55);
+		background: transparent;
+		color: rgb(0 0 0 / 75%);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.25;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+		transition:
+			background-color 0.15s ease-out,
+			color 0.15s ease-out;
+	}
+
+	:root.dark .ctx-item {
+		color: rgb(255 255 255 / 75%);
+	}
+
+	.ctx-item:hover {
+		background: var(--btn-plain-bg-hover);
+		color: var(--primary);
+	}
+
+	.ctx-icon {
+		width: 1.05rem;
+		height: 1.05rem;
+		flex-shrink: 0;
+		font-size: 1.05rem;
+	}
+</style>
+
+<script>
+	function setupContextMenu() {
+		const menu = document.getElementById("context-menu");
+		if (!menu) return;
+
+		// Swup 切页重跑脚本防重
+		const w = window as unknown as { __ctxMenuInit?: boolean };
+		if (w.__ctxMenuInit) return;
+		w.__ctxMenuInit = true;
+
+		const open = (x: number, y: number) => {
+			// 先显示再测量，避免 visibility:hidden 下 getBoundingClientRect 为 0
+			menu.classList.add("open");
+			menu.setAttribute("aria-hidden", "false");
+			const rect = menu.getBoundingClientRect();
+			const margin = 8;
+			const x2 = Math.min(x, window.innerWidth - rect.width - margin);
+			const y2 = Math.min(y, window.innerHeight - rect.height - margin);
+			menu.style.left = `${Math.max(margin, x2)}px`;
+			menu.style.top = `${Math.max(margin, y2)}px`;
+		};
+
+		const close = () => {
+			menu.classList.remove("open");
+			menu.setAttribute("aria-hidden", "true");
+		};
+
+		// 右键打开（选中文本时保留浏览器原生菜单）
+		document.addEventListener("contextmenu", (e) => {
+			if (window.getSelection()?.toString()) return; // 选中文字 → 原生菜单
+			e.preventDefault();
+			open(e.clientX, e.clientY);
+		});
+
+		// 关闭时机：左键 / 滚轮 / Esc / 窗口失焦
+		document.addEventListener("click", close);
+		document.addEventListener("wheel", close, { passive: true });
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") close();
+		});
+		window.addEventListener("blur", close);
+
+		// 点击菜单项后关闭；动作项统一分发
+		menu.addEventListener("click", (e) => {
+			const item = (e.target as HTMLElement).closest<HTMLElement>(".ctx-item");
+			if (!item) return;
+			const action = item.dataset.ctxAction;
+			if (!action) return; // 链接项走原生跳转
+			e.preventDefault();
+			switch (action) {
+				case "top":
+					window.scrollTo({ top: 0, behavior: "smooth" });
+					break;
+				case "reload":
+					window.location.reload();
+					break;
+				case "back":
+					history.back();
+					break;
+				case "forward":
+					history.forward();
+					break;
+				case "search": {
+					// 打开站内搜索面板：与导航栏搜索按钮逻辑一致
+					// （Svelte 组件的 togglePanel 是闭包内函数，无法直接调用，
+					//  这里直接切换同一面板类并加载 Pagefind）
+					const panel = document.getElementById("search-panel");
+					if (panel) {
+						panel.classList.remove("float-panel-closed");
+						window.__loadPagefind?.();
+					} else {
+						// 非搜索面板页面回退：跳到搜索页
+						window.location.href = "/search/";
+					}
+					break;
+				}
+			}
+			close();
+		});
+	}
+
+	setupContextMenu();
+</script>
