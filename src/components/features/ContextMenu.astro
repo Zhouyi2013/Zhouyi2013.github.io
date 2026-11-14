@@ -1,9 +1,11 @@
 ---
 // 自定义右键菜单（美化 + 实用功能）
 // - 替代浏览器原生右键菜单，跟随主题色与深浅色模式
-// - 功能区：导航操作（回顶部/刷新/前进/后退）+ 快捷链接（搜索/RSS/GitHub）
-// - 纯 CSS 过渡 + 少量原生 JS，无第三方依赖；选中文本时保留原生菜单
-// - 配置项集中在 define:vars：站点名、RSS/GitHub 地址
+// - 上下文感知：右键链接/图片/媒体时显示对应操作（复制链接、复制图片、另存为、打开新标签页）
+// - 通用操作：复制本页链接、分享（Web Share API，不支持时回退复制链接）
+// - 导航操作（回顶部/刷新/前进/后退）+ 快捷链接（搜索/RSS/GitHub）
+// - 纯 CSS 过渡 + 少量原生 JS，无第三方依赖；选中文本右键时显示“复制选中文本”
+// - 复制/下载动作带轻量 toast 反馈；配置项集中在 define:vars：站点名、RSS/GitHub 地址
 import { Icon } from "astro-icon/components";
 import { profileConfig, siteConfig } from "@/config";
 import { url } from "@/utils/url-utils";
@@ -26,6 +28,66 @@ const rssUrl = url("/rss/");
 	<div class="ctx-header" role="presentation">
 		<div class="ctx-header-name">{siteName}</div>
 		<div class="ctx-header-bio">{profileConfig.bio}</div>
+	</div>
+
+	<!-- 上下文：选中文本（选中文本后右键时显示） -->
+	<div class="ctx-group" data-ctx-context="selected" role="group" aria-label="选中文本" hidden>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="copySelection">
+			<Icon name="material-symbols:content-copy-rounded" class="ctx-icon" />
+			<span>复制选中文本</span>
+		</button>
+	</div>
+
+	<!-- 上下文：链接操作（右键 a[href] 时显示） -->
+	<div class="ctx-group" data-ctx-context="link" role="group" aria-label="链接操作" hidden>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="copyLink">
+			<Icon name="material-symbols:link-rounded" class="ctx-icon" />
+			<span>复制链接</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="openNewTab">
+			<Icon name="material-symbols:open-in-new-rounded" class="ctx-icon" />
+			<span>在新标签页打开</span>
+		</button>
+	</div>
+
+	<!-- 上下文：图片操作（右键 img 时显示） -->
+	<div class="ctx-group" data-ctx-context="image" role="group" aria-label="图片操作" hidden>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="copyImage">
+			<Icon name="material-symbols:image-rounded" class="ctx-icon" />
+			<span>复制图片</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="saveImage">
+			<Icon name="material-symbols:download-rounded" class="ctx-icon" />
+			<span>图片另存为</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="openNewTab">
+			<Icon name="material-symbols:open-in-new-rounded" class="ctx-icon" />
+			<span>在新标签页打开</span>
+		</button>
+	</div>
+
+	<!-- 上下文：媒体操作（右键 video/iframe 时显示） -->
+	<div class="ctx-group" data-ctx-context="media" role="group" aria-label="媒体操作" hidden>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="copyMediaUrl">
+			<Icon name="material-symbols:play-circle-rounded" class="ctx-icon" />
+			<span>复制媒体地址</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="openNewTab">
+			<Icon name="material-symbols:open-in-new-rounded" class="ctx-icon" />
+			<span>在新标签页打开</span>
+		</button>
+	</div>
+
+	<!-- 通用：复制本页 / 分享 -->
+	<div class="ctx-group" role="group" aria-label="页面操作">
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="copyPageUrl">
+			<Icon name="material-symbols:link-rounded" class="ctx-icon" />
+			<span>复制本页链接</span>
+		</button>
+		<button type="button" class="ctx-item" role="menuitem" data-ctx-action="share">
+			<Icon name="material-symbols:share-rounded" class="ctx-icon" />
+			<span>分享</span>
+		</button>
 	</div>
 
 	<!-- 导航操作 -->
@@ -81,11 +143,21 @@ const rssUrl = url("/rss/");
 	</div>
 </div>
 
+<!-- 操作反馈 toast -->
+<div
+	id="context-menu-toast"
+	class="ctx-toast"
+	role="status"
+	aria-live="polite"
+></div>
+
 <style>
 	.ctx-menu {
 		position: fixed;
 		z-index: 10000;
 		min-width: 13rem;
+		max-height: calc(100vh - 1.5rem);
+		overflow-y: auto;
 		padding: 0.375rem;
 		border-radius: calc(var(--radius-large) * 0.9);
 		background: var(--card-bg);
@@ -195,9 +267,47 @@ const rssUrl = url("/rss/");
 		flex-shrink: 0;
 		font-size: 1.05rem;
 	}
+
+	/* 操作反馈 toast */
+	.ctx-toast {
+		position: fixed;
+		left: 50%;
+		bottom: 2rem;
+		transform: translate(-50%, 0.75rem);
+		z-index: var(--z-toast, 1080);
+		max-width: 80vw;
+		padding: 0.5rem 0.875rem;
+		border-radius: 0.625rem;
+		background: rgb(0 0 0 / 82%);
+		color: #fff;
+		font-size: 0.8125rem;
+		line-height: 1.4;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity 0.2s ease-out,
+			transform 0.2s ease-out,
+			visibility 0s linear 0.2s;
+		pointer-events: none;
+	}
+
+	.ctx-toast.show {
+		opacity: 1;
+		visibility: visible;
+		transform: translate(-50%, 0);
+		transition:
+			opacity 0.2s ease-out,
+			transform 0.2s ease-out;
+	}
 </style>
 
 <script>
+	type CtxContext = "link" | "image" | "media" | "selected";
+	type CtxTarget = { type: Exclude<CtxContext, "selected">; url: string };
+
 	function setupContextMenu() {
 		const menu = document.getElementById("context-menu");
 		if (!menu) return;
@@ -206,6 +316,19 @@ const rssUrl = url("/rss/");
 		const w = window as unknown as { __ctxMenuInit?: boolean };
 		if (w.__ctxMenuInit) return;
 		w.__ctxMenuInit = true;
+
+		let currentTarget: CtxTarget | null = null;
+		let selectedText = "";
+		let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+		const toast = (message: string) => {
+			const el = document.getElementById("context-menu-toast");
+			if (!el) return;
+			el.textContent = message;
+			el.classList.add("show");
+			if (toastTimer) clearTimeout(toastTimer);
+			toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
+		};
 
 		const open = (x: number, y: number) => {
 			// 先显示再测量，避免 visibility:hidden 下 getBoundingClientRect 为 0
@@ -224,10 +347,122 @@ const rssUrl = url("/rss/");
 			menu.setAttribute("aria-hidden", "true");
 		};
 
-		// 右键打开（选中文本时保留浏览器原生菜单）
+		// 根据右键目标元素确定上下文（图片 > 媒体 > 链接）
+		const resolveTarget = (t: EventTarget | null): CtxTarget | null => {
+			if (!(t instanceof Element)) return null;
+			const img = t.closest("img");
+			if (img && img.src) return { type: "image", url: img.src };
+			const video = t.closest("video");
+			if (video) {
+				const url = video.currentSrc || video.src;
+				if (url) return { type: "media", url };
+			}
+			const iframe = t.closest("iframe");
+			if (iframe && iframe.src) return { type: "media", url: iframe.src };
+			const link = t.closest("a[href]");
+			if (link) return { type: "link", url: link.href };
+			return null;
+		};
+
+		// 仅显示与当前上下文匹配的分组
+		const setContext = (type: CtxContext | null) => {
+			menu
+				.querySelectorAll<HTMLElement>(".ctx-group[data-ctx-context]")
+				.forEach((group) => {
+					group.hidden = group.dataset.ctxContext !== type;
+				});
+		};
+
+		// 剪贴板写文本（带反馈）
+		const copyText = async (text: string, message: string) => {
+			if (!text) throw new Error("empty");
+			await navigator.clipboard.writeText(text);
+			toast(message);
+		};
+
+		// 从 URL 推导下载文件名
+		const fileNameFromUrl = (src: string) => {
+			try {
+				const u = new URL(src, location.href);
+				let name = u.pathname.split("/").pop() || "";
+				if (!name) name = "image";
+				if (!/\.[a-z0-9]{2,5}$/i.test(name)) name += ".png";
+				return name;
+			} catch {
+				return "image.png";
+			}
+		};
+
+		// 复制图片为位图；跨域/不支持时回退复制图片链接
+		const copyImage = async (src: string) => {
+			try {
+				if (navigator.clipboard && "ClipboardItem" in window) {
+					const blob = await (await fetch(src, { mode: "cors" })).blob();
+					await navigator.clipboard.write([
+						new ClipboardItem({ [blob.type]: blob }),
+					]);
+					toast("图片已复制");
+					return;
+				}
+				throw new Error("unsupported");
+			} catch {
+				try {
+					await copyText(src, "已复制图片链接（当前浏览器不支持直接复制图片）");
+				} catch {
+					toast("复制图片失败");
+				}
+			}
+		};
+
+		// 图片另存为：跨域取不到 blob 时回退新标签页打开
+		const saveImage = async (src: string) => {
+			try {
+				const blob = await (await fetch(src)).blob();
+				const objectUrl = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = objectUrl;
+				a.download = fileNameFromUrl(src);
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				URL.revokeObjectURL(objectUrl);
+				toast("已开始下载图片");
+			} catch {
+				window.open(src, "_blank", "noopener,noreferrer");
+				toast("已在新标签页打开，请手动保存");
+			}
+		};
+
+		// 分享：支持 Web Share API 时调起系统分享，否则复制链接
+		const sharePage = async () => {
+			if (navigator.share) {
+				try {
+					await navigator.share({ title: document.title, url: location.href });
+				} catch {
+					/* 用户取消 */
+				}
+				return;
+			}
+			try {
+				await copyText(location.href, "已复制分享链接");
+			} catch {
+				toast("分享失败，请手动复制链接");
+			}
+		};
+
+		// 右键打开：选中文本时显示“复制选中文本”，否则按目标元素切换上下文
 		document.addEventListener("contextmenu", (e) => {
-			if (window.getSelection()?.toString()) return; // 选中文字 → 原生菜单
 			e.preventDefault();
+			const selected = window.getSelection()?.toString().trim() || "";
+			if (selected) {
+				selectedText = selected;
+				currentTarget = null;
+				setContext("selected");
+			} else {
+				selectedText = "";
+				currentTarget = resolveTarget(e.target);
+				setContext(currentTarget?.type ?? null);
+			}
 			open(e.clientX, e.clientY);
 		});
 
@@ -246,6 +481,7 @@ const rssUrl = url("/rss/");
 			const action = item.dataset.ctxAction;
 			if (!action) return; // 链接项走原生跳转
 			e.preventDefault();
+			const target = currentTarget;
 			switch (action) {
 				case "top":
 					window.scrollTo({ top: 0, behavior: "smooth" });
@@ -273,6 +509,31 @@ const rssUrl = url("/rss/");
 					}
 					break;
 				}
+				case "copyPageUrl":
+					void copyText(location.href, "本页链接已复制");
+					break;
+				case "copySelection":
+					if (selectedText) void copyText(selectedText, "选中文本已复制");
+					break;
+				case "share":
+					void sharePage();
+					break;
+				case "copyLink":
+					if (target?.url) void copyText(target.url, "链接已复制");
+					break;
+				case "copyMediaUrl":
+					if (target?.url) void copyText(target.url, "媒体地址已复制");
+					break;
+				case "openNewTab":
+					if (target?.url)
+						window.open(target.url, "_blank", "noopener,noreferrer");
+					break;
+				case "copyImage":
+					if (target?.url) void copyImage(target.url);
+					break;
+				case "saveImage":
+					if (target?.url) void saveImage(target.url);
+					break;
 			}
 			close();
 		});

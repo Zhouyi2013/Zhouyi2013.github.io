@@ -161,6 +161,18 @@ const description =
                     : null}
                 </div>
               </div>
+
+              {/* 复制链接按钮 - 悬停显示，点击复制该友链地址 */}
+              <button
+                type="button"
+                data-copy={item.siteurl}
+                class="friend-copy-btn group-hover:opacity-100 absolute right-2.5 bottom-2.5 z-20 flex items-center justify-center w-8 h-8 rounded-lg bg-black/5 dark:bg-white/10 text-neutral-600 dark:text-neutral-300 opacity-0 transition-all duration-300 hover:bg-black/10 dark:hover:bg-white/20 hover:text-(--primary) cursor-pointer"
+                title="复制链接"
+                aria-label={`复制 ${item.title} 的链接`}
+              >
+                <Icon name="material-symbols:content-copy-rounded" class="friend-copy-icon text-lg" />
+                <Icon name="material-symbols:check-rounded" class="friend-copy-check hidden text-lg text-green-500" />
+              </button>
             </a>
           ))
         }
@@ -270,6 +282,40 @@ const description =
       }
       customElements.define("friend-filter", FriendFilter);
     }
+  </script>
+
+  <script is:inline>
+    // 友链卡片“复制链接”按钮：事件委托到 document，兼容 Swup 切页
+    (function () {
+      if (window.__friendCopyBound) return;
+      window.__friendCopyBound = true;
+
+      function flashCopied(btn) {
+        var copyIcon = btn.querySelector(".friend-copy-icon");
+        var checkIcon = btn.querySelector(".friend-copy-check");
+        if (copyIcon) copyIcon.classList.add("hidden");
+        if (checkIcon) checkIcon.classList.remove("hidden");
+        setTimeout(function () {
+          if (copyIcon) copyIcon.classList.remove("hidden");
+          if (checkIcon) checkIcon.classList.add("hidden");
+        }, 1500);
+      }
+
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest(".friend-copy-btn");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var url = btn.getAttribute("data-copy");
+        if (!url || !navigator.clipboard) return;
+        navigator.clipboard
+          .writeText(url)
+          .then(function () {
+            flashCopied(btn);
+          })
+          .catch(function () {});
+      });
+    })();
   </script>
 
 </MainGridLayout>
