@@ -36,7 +36,7 @@ tags:
 
 ````yaml
 ---
-title: "Firefly"
+title: "Firefly(Modded by Zhouyi2013)"
 slug: firefly
 published: 2025-10-01
 draft: false
@@ -50,7 +50,7 @@ tags:
 link:
   - label: "GitHub"
     icon: "fa7-brands:github"
-    value: "https://github.com/CuteLeaf/Firefly"
+    value: "https://github.com/zhouyi2013/zhouyi2013.github.io"
   - label: "文档"
     icon: "material-symbols:menu-book"
     value: "https://docs-firefly.cuteleaf.cn"

@@ -1,5 +1,5 @@
 ---
-title: "Firefly 主题模版"
+title: "Firefly(Modded by Zhouyi2013) 主题模版"
 slug: firefly
 published: 2025-10-01
 order: 100
@@ -14,7 +14,7 @@ tags:
 link:
   - label: "GitHub"
     icon: "fa7-brands:github"
-    value: "https://github.com/CuteLeaf/Firefly"
+    value: "https://github.com/zhouyi2013/zhouyi2013.github.io"
   - label: "文档"
     icon: "material-symbols:menu-book"
     value: "https://docs-firefly.cuteleaf.cn"
@@ -48,7 +48,7 @@ link:
 - [x] **壁纸模式切换** - 横幅壁纸、全屏壁纸、全屏透明壁纸、纯色背景
 - [x] **主题色自定义** - 360° 色相调节
 
-如果你有好用的功能和优化，请提交 [Pull Request](https://github.com/CuteLeaf/Firefly/pulls)
+如果你有好用的功能和优化，请提交 [Pull Request](https://github.com/zhouyi2013/zhouyi2013.github.io/pulls)
 
 ## 快速开始
 
@@ -61,15 +61,15 @@ link:
 
 1. **克隆仓库：**
    ```bash
-   git clone https://github.com/Cuteleaf/Firefly.git
-   cd Firefly
+   git clone https://github.com/zhouyi2013/zhouyi2013.github.io.git
+   cd zhouyi2013.github.io
    ```
    
-   **先 [Fork](https://github.com/CuteLeaf/Firefly/fork) 到自己仓库再克隆（推荐），记得先点 Star 再 Fork 哦！**
+   **先 [Fork](https://github.com/zhouyi2013/zhouyi2013.github.io/fork) 到自己仓库再克隆（推荐），记得先点 Star 再 Fork 哦！**
 
    ```bash
-   git clone https://github.com/you-github-name/Firefly.git
-   cd Firefly
+   git clone https://github.com/you-github-name/zhouyi2013.github.io.git
+   cd zhouyi2013.github.io
    ```
 3. **安装依赖：**
    ```bash
