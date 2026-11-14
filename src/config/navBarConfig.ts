@@ -115,7 +115,6 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 				external: true,
 				icon: "fa7-brands:gitee",
 			},
-			
 		],
 	});
 

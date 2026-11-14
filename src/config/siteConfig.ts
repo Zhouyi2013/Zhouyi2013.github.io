@@ -15,24 +15,24 @@ const SITE_LANG = resolveSiteLang("zh_CN");
 // ======================================================
 
 const pages = resolvePageToggles({
-  // 社交
-  friends: true,
-  guestbook: true,
+	// 社交
+	friends: true,
+	guestbook: true,
 
-  // 个人页面
-  dynamic: true,
-  projects: true,
-  gallery: false,
-  booknav: true,
+	// 个人页面
+	dynamic: true,
+	projects: true,
+	gallery: false,
+	booknav: true,
 
-  // 追番页面
-  bilibili: true,
-  bangumi: false,
-  vndb: false,
-  mal: false,
+	// 追番页面
+	bilibili: true,
+	bangumi: false,
+	vndb: false,
+	mal: false,
 
-  // 关于
-  sponsor: false,
+	// 关于
+	sponsor: false,
 });
 
 // ======================================================
@@ -40,320 +40,310 @@ const pages = resolvePageToggles({
 // ======================================================
 
 export const siteConfig: SiteConfig = {
-  // ----------------------------------------------------
-  // 基本信息
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 基本信息
+	// ----------------------------------------------------
 
-  title: "Zhouyi's Blog",
+	title: "Zhouyi's Blog",
 
-  subtitle: "于人间烟火处，独守一隅清欢。",
+	subtitle: "于人间烟火处，独守一隅清欢。",
 
-  site_url: "https://zhouyi2013.github.io",
+	site_url: "https://zhouyi2013.github.io",
 
-  description: "于人间烟火处，独守一隅清欢。",
+	description: "于人间烟火处，独守一隅清欢。",
 
-  keywords: [
-    "Zhouyi2013",
-    "Zhouyi",
-    "博客",
-    "技术博客",
-  ],
+	keywords: ["Zhouyi2013", "Zhouyi", "博客", "技术博客"],
 
-  // ----------------------------------------------------
-  // 主题色
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 主题色
+	// ----------------------------------------------------
 
-  themeColor: {
-    hue: 215,
-    defaultMode: "system",
-  },
+	themeColor: {
+		hue: 215,
+		defaultMode: "system",
+	},
 
-  // ----------------------------------------------------
-  // 页面宽度
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 页面宽度
+	// ----------------------------------------------------
 
-  pageWidth: 100,
+	pageWidth: 100,
 
-  // ----------------------------------------------------
-  // 卡片样式
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 卡片样式
+	// ----------------------------------------------------
 
-  card: {
-    border: true,
-    followTheme: true,
-  },
+	card: {
+		border: true,
+		followTheme: true,
+	},
 
-  // ----------------------------------------------------
-  // Favicon
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// Favicon
+	// ----------------------------------------------------
 
-  favicon: [
-    {
-      src: "http://q1.qlogo.cn/g?b=qq&nk=823672854&s=100",
-    },
-  ],
+	favicon: [
+		{
+			src: "http://q1.qlogo.cn/g?b=qq&nk=823672854&s=100",
+		},
+	],
 
-  // ----------------------------------------------------
-  // 导航栏
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 导航栏
+	// ----------------------------------------------------
 
-  navbar: {
-    logo: {
-      type: "url",
-      value: "http://q1.qlogo.cn/g?b=qq&nk=823672854&s=100",
-      alt: "Zhouyi's Blog",
-    },
+	navbar: {
+		logo: {
+			type: "url",
+			value: "http://q1.qlogo.cn/g?b=qq&nk=823672854&s=100",
+			alt: "Zhouyi's Blog",
+		},
 
-    title: "Zhouyi's Blog",
+		title: "Zhouyi's Blog",
 
-    widthFull: false,
+		widthFull: false,
 
-    menuAlign: "center",
+		menuAlign: "center",
 
-    followTheme: true,
+		followTheme: true,
 
-    navbarMode: "dynamic",
-  },
+		navbarMode: "dynamic",
+	},
 
-  // ----------------------------------------------------
-  // 站点运行时间
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 站点运行时间
+	// ----------------------------------------------------
 
-  siteStartDate: "2013-06-04",
+	siteStartDate: "2013-06-04",
 
-  timezone: "Asia/Shanghai",
+	timezone: "Asia/Shanghai",
 
-  // ----------------------------------------------------
-  // 分类导航栏
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 分类导航栏
+	// ----------------------------------------------------
 
-  categoryBar: true,
+	categoryBar: true,
 
-  categoryStyle: "rectangle",
+	categoryStyle: "rectangle",
 
-  // ----------------------------------------------------
-  // 标签样式
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 标签样式
+	// ----------------------------------------------------
 
-  tagStyle: "pill",
+	tagStyle: "pill",
 
-  // ----------------------------------------------------
-  // 归档页面
-  // ----------------------------------------------------
+	// ----------------------------------------------------
+	// 归档页面
+	// ----------------------------------------------------
 
-  foldArticle: true,
+	foldArticle: true,
 
-  // ====================================================
-  // 文章列表
-  // ====================================================
+	// ====================================================
+	// 文章列表
+	// ====================================================
 
-  postListLayout: {
-    // 桌面端列表
-    defaultMode: "list",
+	postListLayout: {
+		// 桌面端列表
+		defaultMode: "list",
 
-    // 移动端网格
-    mobileDefaultMode: "grid",
+		// 移动端网格
+		mobileDefaultMode: "grid",
 
-    // 封面位置
-    coverPosition: "right",
+		// 封面位置
+		coverPosition: "right",
 
-    // 简介显示行数
-    descriptionLines: 3,
+		// 简介显示行数
+		descriptionLines: 3,
 
-    // 统计图标
-    showStatsIcons: true,
+		// 统计图标
+		showStatsIcons: true,
 
-    // 标签显示在底部
-    tagsPosition: "bottom",
+		// 标签显示在底部
+		tagsPosition: "bottom",
 
-    // 底部标签样式
-    tagsBottomStyle: "chip",
+		// 底部标签样式
+		tagsBottomStyle: "chip",
 
-    // 元数据
-    meta: {
-      showPublished: true,
-      showCategory: true,
-      showTags: true,
-      tagCount: 0,
-      showWords: false,
-      showReadingTime: false,
-    },
+		// 元数据
+		meta: {
+			showPublished: true,
+			showCategory: true,
+			showTags: true,
+			tagCount: 0,
+			showWords: false,
+			showReadingTime: false,
+		},
 
-    // 底部统计
-    stats: {
-      showPublished: true,
-      showWords: true,
-      showReadingTime: true,
-    },
+		// 底部统计
+		stats: {
+			showPublished: true,
+			showWords: true,
+			showReadingTime: true,
+		},
 
-    // 网格配置
-    grid: {
-      masonry: true,
-      columnWidth: 320,
-      coverFullWidth: false,
-    },
-  },
+		// 网格配置
+		grid: {
+			masonry: true,
+			columnWidth: 320,
+			coverFullWidth: false,
+		},
+	},
 
-  // ====================================================
-  // 分页
-  // ====================================================
+	// ====================================================
+	// 分页
+	// ====================================================
 
-  pagination: {
-    postsPerPage: 6,
-  },
+	pagination: {
+		postsPerPage: 6,
+	},
 
-  // ====================================================
-  // 文章详情页
-  // ====================================================
+	// ====================================================
+	// 文章详情页
+	// ====================================================
 
-  post: {
-    // 提示框
-    rehypeCallouts: {
-      theme: "vitepress",
+	post: {
+		// 提示框
+		rehypeCallouts: {
+			theme: "vitepress",
 
-      // Python Markdown 语法兼容
-      enablePythonMarkdownAdmonitions: true,
-    },
+			// Python Markdown 语法兼容
+			enablePythonMarkdownAdmonitions: true,
+		},
 
-    // 编辑时间
-    showLastModified: true,
+		// 编辑时间
+		showLastModified: true,
 
-    outdatedThreshold: 30,
+		outdatedThreshold: 30,
 
-    // 分享
-    share: true,
+		// 分享
+		share: true,
 
-    // 上一篇 / 下一篇
-    postNavigation: true,
+		// 上一篇 / 下一篇
+		postNavigation: true,
 
-    // 相关文章
-    relatedPosts: true,
+		// 相关文章
+		relatedPosts: true,
 
-    // 随机文章
-    randomPosts: true,
+		// 随机文章
+		randomPosts: true,
 
-    // OpenGraph
-    generateOgImages: true,
+		// OpenGraph
+		generateOgImages: true,
 
-    // 沉浸式阅读
-    immersiveReading: {
-      enable: true,
+		// 沉浸式阅读
+		immersiveReading: {
+			enable: true,
 
-      defaultOn: false,
+			defaultOn: false,
 
-      tocEnabled: true,
+			tocEnabled: true,
 
-      tocPosition: "left",
-    },
-  },
+			tocPosition: "left",
+		},
+	},
 
-  // ====================================================
-  // Bilibili
-  // ====================================================
+	// ====================================================
+	// Bilibili
+	// ====================================================
 
-  bilibili: {
-    uid: "5214272",
-  },
+	bilibili: {
+		uid: "5214272",
+	},
 
-  // ====================================================
-  // Bangumi
-  // ====================================================
+	// ====================================================
+	// Bangumi
+	// ====================================================
 
-  bangumi: {
-    userId: "1143164",
+	bangumi: {
+		userId: "1143164",
 
-    mode: "dynamic",
+		mode: "dynamic",
 
-    apiUrl: "https://api.bangumi.pro",
+		apiUrl: "https://api.bangumi.pro",
 
-    subjectBaseUrl: "https://api.bangumi.pro/subject/",
+		subjectBaseUrl: "https://api.bangumi.pro/subject/",
 
-    categoryOrder: [
-      "anime",
-      "book",
-      "music",
-      "game",
-    ],
+		categoryOrder: ["anime", "book", "music", "game"],
 
-    nsfw: "hide",
-  },
+		nsfw: "hide",
+	},
 
-  // ====================================================
-  // VNDB
-  // ====================================================
+	// ====================================================
+	// VNDB
+	// ====================================================
 
-  vndb: {
-    userId: "u358128",
+	vndb: {
+		userId: "u358128",
 
-    mode: "static",
+		mode: "static",
 
-    downloadCovers: false,
+		downloadCovers: false,
 
-    apiUrl: "https://api.vndb.org/kana",
+		apiUrl: "https://api.vndb.org/kana",
 
-    vnBaseUrl: "https://vndb.org/",
+		vnBaseUrl: "https://vndb.org/",
 
-    apiToken: "",
+		apiToken: "",
 
-    nsfw: "hide",
-  },
+		nsfw: "hide",
+	},
 
-  // ====================================================
-  // MyAnimeList
-  // ====================================================
+	// ====================================================
+	// MyAnimeList
+	// ====================================================
 
-  mal: {
-    username: "cuteleaf",
+	mal: {
+		username: "cuteleaf",
 
-    clientId: "0ef34371450f9c6c809deaadec6aa8f3",
+		clientId: "0ef34371450f9c6c809deaadec6aa8f3",
 
-    apiUrl: "https://api.myanimelist.net/v2",
+		apiUrl: "https://api.myanimelist.net/v2",
 
-    animeBaseUrl: "https://myanimelist.net/anime/",
+		animeBaseUrl: "https://myanimelist.net/anime/",
 
-    mangaBaseUrl: "https://myanimelist.net/manga/",
+		mangaBaseUrl: "https://myanimelist.net/manga/",
 
-    nsfw: "hide",
-  },
+		nsfw: "hide",
+	},
 
-  // ====================================================
-  // 图片优化
-  // ====================================================
+	// ====================================================
+	// 图片优化
+	// ====================================================
 
-  imageOptimization: {
-    // WebP
-    formats: "webp",
+	imageOptimization: {
+		// WebP
+		formats: "webp",
 
-    // 压缩质量
-    quality: 70,
+		// 压缩质量
+		quality: 70,
 
-    // 防盗链兼容
-    noReferrerDomains: [
-      "*.hdslb.com",
-      "*.bilibili.com",
-      "*.myanimelist.net",
-      "*.vndb.org",
-      "*.qlogo.cn",
-    ],
-  },
+		// 防盗链兼容
+		noReferrerDomains: [
+			"*.hdslb.com",
+			"*.bilibili.com",
+			"*.myanimelist.net",
+			"*.vndb.org",
+			"*.qlogo.cn",
+		],
+	},
 
-  // ====================================================
-  // RSS / Atom
-  // ====================================================
+	// ====================================================
+	// RSS / Atom
+	// ====================================================
 
-  feed: {
-    contentMode: "full",
-  },
+	feed: {
+		contentMode: "full",
+	},
 
-  // ====================================================
-  // 语言
-  // ====================================================
+	// ====================================================
+	// 语言
+	// ====================================================
 
-  lang: SITE_LANG,
+	lang: SITE_LANG,
 
-  // ====================================================
-  // 页面开关
-  // ====================================================
+	// ====================================================
+	// 页面开关
+	// ====================================================
 
-  pages,
+	pages,
 };
