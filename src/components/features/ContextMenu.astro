@@ -359,7 +359,7 @@ const rssUrl = url("/rss/");
 			}
 			const iframe = t.closest("iframe");
 			if (iframe && iframe.src) return { type: "media", url: iframe.src };
-			const link = t.closest("a[href]");
+			const link = t.closest<HTMLAnchorElement>("a[href]");
 			if (link) return { type: "link", url: link.href };
 			return null;
 		};
