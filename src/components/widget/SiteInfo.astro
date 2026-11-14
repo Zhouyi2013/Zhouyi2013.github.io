@@ -118,12 +118,14 @@ const detailItems: {
 	label: string;
 	value: string;
 	fullWidth?: boolean;
+	valueId?: string;
 }[] = [
 	{
 		icon: "material-symbols:language",
 		label: i18n(I18nKey.siteInfoDomain),
 		value: siteDomain,
 		fullWidth: true,
+		valueId: "site-info-domain-value",
 	},
 	{
 		icon: "mdi:clover",
@@ -213,7 +215,7 @@ const detailItems: {
         <div class="grid grid-cols-2 gap-2">
           {
             detailItems.map(
-              (item: { icon: string; label: string; value: string; fullWidth?: boolean }) => (
+              (item: { icon: string; label: string; value: string; fullWidth?: boolean; valueId?: string }) => (
                 <div class:list={[
                   "flex flex-col items-center gap-1 py-2 px-1 rounded-lg bg-neutral-100/60 dark:bg-neutral-800/50",
                   { "col-span-2": item.fullWidth }
@@ -230,6 +232,7 @@ const detailItems: {
                       { "text-xs": item.fullWidth }
                     ]}
                     title={item.value}
+                    {...(item.valueId ? { id: item.valueId } : {})}
                   >
                     {item.value}
                   </span>
@@ -288,5 +291,12 @@ const detailItems: {
 
   if (!customElements.get("site-info-collapse")) {
     customElements.define("site-info-collapse", SiteInfoCollapse);
+  }
+
+  // 站点域名改为从实际访问地址读取（构建时的 siteConfig.site_url 值仅作无 JS 环境下的兜底展示）
+  const siteInfoDomainEl = document.getElementById("site-info-domain-value");
+  if (siteInfoDomainEl) {
+    siteInfoDomainEl.textContent = window.location.host;
+    siteInfoDomainEl.title = window.location.host;
   }
 </script>
